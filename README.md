@@ -1,8 +1,7 @@
 🪁 Kite
 
 Kite is a lightweight, offline productivity and mood tracker built with Python 3 — no dependencies required!
-
-<img width="796" height="747" alt="image" src="https://github.com/user-attachments/assets/36600cd3-1ecb-4d00-986f-161253052b1a" />
+<img width="857" height="594" alt="image" src="https://github.com/user-attachments/assets/a37c9e97-3010-400f-8403-b68df4d1325b" />
 
 
 Designed to boost focus and well-being, Kite helps you plan focus sessions (10, 20, or 30 minutes), track your mood, and gain insightful analytics into your daily, weekly, and monthly performance — all while keeping your data private and offline.
