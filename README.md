@@ -34,7 +34,7 @@ Installation
 
 Clone or download, then run sudo python3 kite.py
 
-    💡 No installation needed! Just run the script—everything is self-contained.
+    💡 No installation needed! Just run the script—everything is self-contained by running sudo python3 kite.py
 
 🧠 How It Works
 
