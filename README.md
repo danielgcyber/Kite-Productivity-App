@@ -1,7 +1,9 @@
 🪁 Kite – Focus Timer with Mood Tracking & Personalized Breaks
 🪁 Stay focused. Stay balanced. Fly high.
 
-Kite is a sleek, privacy-respecting focus timer built for deep work, wellness, and emotional awareness. Designed with a dark-mode aesthetic and smooth animations, Kite helps you stay productive while tracking your mood on a 1–10 scale and recommending science-backed breaks tailored to your body and energy levels.
+Kite is a sleek, privacy-first focus timer designed for deep work, sustainable wellness, and emotional awareness. With a refined dark-mode interface and fluid animations, Kite transforms your study or work sessions by tracking your mood on an intuitive 1–10 scale and delivering science-backed, personalized break recommendations—calibrated to your age, body, and energy needs.  
+
+Instead of burning out after 1–2 hours of grinding, Kite empowers you to sustain 5+ hours of energized, focused productivity—turning exhausting cram sessions into calm, rhythmic, and deeply effective Pomodoro cycles.
 
 Perfect for students, developers, writers, and anyone seeking mindful productivity—without distractions or cloud dependencies.
 ✨ Features
