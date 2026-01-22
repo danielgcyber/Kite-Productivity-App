@@ -30,18 +30,7 @@ Prerequisites
 
 Installation
 
-    Clone or download this repository:
-
-    bash
-    1
-    2
-
-    Run the app:
-
-    bash
-    1
-
-    Complete your profile on first launch (used for personalized break recommendations).
+Clone or download, then run sudo python3 kite.py
 
     💡 No installation needed! Just run the script—everything is self-contained.
 
