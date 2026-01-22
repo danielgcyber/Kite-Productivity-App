@@ -42,24 +42,6 @@ GLOW_COLORS = [
 ]
 GLOW_CYCLE = len(GLOW_COLORS)
 
-# Mood scoring for analytics
-MOOD_SCORE = {
-    "happy": 4,
-    "tired": 2,
-    "sad": 1,
-    "angry": 0
-}
-
-MOOD_LABELS = ["😠 Angry", "😔 Sad", "😴 Tired", "😐 Neutral", "😊 Happy"]
-
-MOOD_COLORS = {
-    0: RED,        # angry
-    1: "#ff9e6d",  # sad
-    2: YELLOW,     # tired
-    3: MUTED,      # neutral
-    4: GREEN       # happy
-}
-
 # ----------------------------
 # CORE LOGIC
 # ----------------------------
@@ -132,16 +114,13 @@ class KiteCanvas:
 
     def _get_kite_x_bounds(self, y, cx, cy):
         """Return (x_left, x_right) of kite at given y."""
-        # Kite spans from cy-60 (top) to cy+60 (bottom)
         if y < cy - 60 or y > cy + 60:
             return None, None
         if y <= cy:
-            # Upper half: from top (cy-60) to center (cy)
-            t = (y - (cy - 60)) / 60  # 0 at top, 1 at center
+            t = (y - (cy - 60)) / 60
             half_width = 40 * t
         else:
-            # Lower half: from center (cy) to bottom (cy+60)
-            t = ((cy + 60) - y) / 60  # 1 at center, 0 at bottom
+            t = ((cy + 60) - y) / 60
             half_width = 40 * t
         return cx - half_width, cx + half_width
 
@@ -149,22 +128,19 @@ class KiteCanvas:
         self.canvas.delete("all")
         cx, cy = self.width // 2, self.height // 2
 
-        # Draw kite outline
         top = (cx, cy - 60)
         right = (cx + 40, cy)
         bottom = (cx, cy + 60)
         left = (cx - 40, cy)
         self.canvas.create_polygon([top, right, bottom, left], outline=MUTED, width=2, fill=BG)
 
-        # Continuous fill from bottom up
         if self.percent > 0:
             fill_color = GLOW_COLORS[self.glow_index] if self.session_active else ACCENT
-            fill_height = (self.percent / 100.0) * 120  # total kite height = 120px
-            y_start = cy + 60  # bottom
+            fill_height = (self.percent / 100.0) * 120
+            y_start = cy + 60
             y_end = y_start - fill_height
 
-            # Draw horizontal lines only within kite bounds
-            step = 1  # 1px steps for smoothness
+            step = 1
             y = y_start
             while y >= y_end and y >= cy - 60:
                 x_left, x_right = self._get_kite_x_bounds(y, cx, cy)
@@ -172,7 +148,6 @@ class KiteCanvas:
                     self.canvas.create_line(x_left, y, x_right, y, fill=fill_color, width=step)
                 y -= step
 
-        # Draw tail
         tail_start_y = cy + 60
         for i in range(6):
             y1 = tail_start_y + i * 7
@@ -180,7 +155,6 @@ class KiteCanvas:
             x_offset = 4 if i % 2 == 0 else -4
             self.canvas.create_line(cx, y1, cx + x_offset, y2, fill=MUTED, width=1.5)
 
-        # Timer text
         if self.time_text:
             self.canvas.create_text(cx, cy, text=self.time_text, fill=TEXT, font=("Segoe UI", 20, "bold"))
 
@@ -196,7 +170,6 @@ class ProfileSetupFrame(tk.Frame):
         tk.Label(self, text="Complete your profile for personalized, productivity-optimized breaks",
                  font=("Segoe UI", 10), fg=MUTED, bg=BG, wraplength=380).pack()
 
-        # Gender
         tk.Label(self, text="Gender:", font=("Segoe UI", 11), fg=TEXT, bg=BG).pack(pady=(12, 4))
         self.gender_var = tk.StringVar(value="Male")
         gen_frame = tk.Frame(self, bg=BG)
@@ -205,12 +178,10 @@ class ProfileSetupFrame(tk.Frame):
                            selectcolor=PANEL, activebackground=BG).pack(side="left", padx=8)
         gen_frame.pack()
 
-        # Age
         tk.Label(self, text="Age:", font=("Segoe UI", 11), fg=TEXT, bg=BG).pack(pady=(10, 4))
         self.age_var = tk.StringVar(value="25")
         tk.Spinbox(self, from_=13, to=100, textvariable=self.age_var, width=6, font=("Segoe UI", 11)).pack()
 
-        # Height
         tk.Label(self, text="Height:", font=("Segoe UI", 11), fg=TEXT, bg=BG).pack(pady=(10, 4))
         height_frame = tk.Frame(self, bg=BG)
         self.ft_var = tk.StringVar(value="5")
@@ -223,12 +194,10 @@ class ProfileSetupFrame(tk.Frame):
         tk.Label(height_frame, text='"', bg=BG, fg=TEXT).pack(side="left")
         height_frame.pack()
 
-        # Weight
         tk.Label(self, text="Weight (lbs):", font=("Segoe UI", 11), fg=TEXT, bg=BG).pack(pady=(10, 4))
         self.weight_var = tk.StringVar(value="150")
         tk.Entry(self, textvariable=self.weight_var, width=10, font=("Segoe UI", 11)).pack()
 
-        # Save button
         tk.Button(
             self, text="✅ Save & Launch Kite", command=self.save_profile,
             bg=GREEN, fg="#000", font=("Segoe UI", 12, "bold"), padx=20, pady=10
@@ -257,16 +226,15 @@ class KiteAppFrame(tk.Frame):
         super().__init__(parent, bg=BG)
         self.profile = profile
         self.session_active = False
+        self.session_paused = False
         self.timer_thread = None
         self.seconds_left = 0
         self.total_seconds = 600
         self.log_data = self.load_log()
 
-        # Header
         tk.Label(self, text="🪁 Kite", font=("Segoe UI", 26, "bold"), fg=ACCENT, bg=BG).pack(pady=(15, 5))
         tk.Label(self, text="Optimized for productivity", font=("Segoe UI", 11), fg=MUTED, bg=BG).pack()
 
-        # Duration
         dur_frame = tk.Frame(self, bg=BG)
         dur_frame.pack(pady=10)
         tk.Label(dur_frame, text="Session Length:", fg=MUTED, bg=BG, font=("Segoe UI", 11)).pack(side="left")
@@ -275,26 +243,24 @@ class KiteAppFrame(tk.Frame):
             tk.Radiobutton(dur_frame, text=f"{val} min", variable=self.duration_var, value=val,
                            bg=BG, fg=TEXT, selectcolor=PANEL, activebackground=BG).pack(side="left", padx=10)
 
-        # Kite
         self.kite_canvas = KiteCanvas(self)
 
-        # Status
         self.status_label = tk.Label(
             self, text="Select duration and start your focus session.",
             font=("Segoe UI", 12), fg=TEXT, bg=BG, wraplength=580
         )
         self.status_label.pack(pady=10)
 
-        # Buttons
         btn_frame = tk.Frame(self, bg=BG)
         btn_frame.pack(pady=15)
         self.start_btn = tk.Button(btn_frame, text="▶ Start Focus", command=self.start_session,
                                    font=("Segoe UI", 12, "bold"), bg=GREEN, fg="#000", padx=20, pady=8)
         self.start_btn.pack(side="left", padx=8)
 
-        self.break_btn = tk.Button(btn_frame, text="⏸ Break Now", command=self.take_break,
+        # Pause/Resume button (replaces "Break Now")
+        self.pause_btn = tk.Button(btn_frame, text="⏸ Pause", command=self.toggle_pause,
                                    font=("Segoe UI", 12, "bold"), bg=YELLOW, fg="#000", padx=20, pady=8, state="disabled")
-        self.break_btn.pack(side="left", padx=8)
+        self.pause_btn.pack(side="left", padx=8)
 
         self.report_btn = tk.Button(btn_frame, text="📊 Analytics", command=self.show_analytics,
                                     font=("Segoe UI", 12, "bold"), bg=ACCENT, fg="#000", padx=20, pady=8)
@@ -304,7 +270,6 @@ class KiteAppFrame(tk.Frame):
                                  font=("Segoe UI", 12, "bold"), bg=RED, fg="#fff", padx=20, pady=8)
         self.end_btn.pack(side="left", padx=8)
 
-        # Footer
         water = water_goal(self.profile["weight_lbs"])
         ht = f"{self.profile['height_ft']}′{self.profile['height_in']}″"
         footer_text = f"Profile: {self.profile['gender']}, {self.profile['age']}y | {ht}, {int(self.profile['weight_lbs'])} lbs | Water Goal: {water}L"
@@ -338,10 +303,11 @@ class KiteAppFrame(tk.Frame):
             self.total_seconds = mins * 60
             self.seconds_left = self.total_seconds
             self.session_active = True
+            self.session_paused = False
             self.kite_canvas.set_active(True)
             self.start_btn.config(state="disabled", bg="#555")
-            self.break_btn.config(state="normal", bg=YELLOW)
-            self.status_label.config(text=f"Focusing for {mins} minutes... Complete the full session or take a break.")
+            self.pause_btn.config(state="normal", bg=YELLOW, text="⏸ Pause")
+            self.status_label.config(text=f"Focusing for {mins} minutes... Use Pause to take a break.")
             
             self.kite_canvas.time_text = f"{mins:02}:00"
             self.kite_canvas.percent = 0
@@ -353,13 +319,14 @@ class KiteAppFrame(tk.Frame):
             messagebox.showerror("Error", f"Invalid input: {e}")
 
     def run_timer(self):
-        while self.seconds_left > 0 and self.session_active:
+        while self.seconds_left > 0 and self.session_active and not self.session_paused:
             time.sleep(1)
-            self.seconds_left -= 1
-            mins, secs = divmod(self.seconds_left, 60)
-            time_str = f"{mins:02}:{secs:02}"
-            self.after(0, lambda t=time_str: self.update_kite(t))
-        if self.session_active:
+            if not self.session_paused and self.session_active:
+                self.seconds_left -= 1
+                mins, secs = divmod(self.seconds_left, 60)
+                time_str = f"{mins:02}:{secs:02}"
+                self.after(0, lambda t=time_str: self.update_kite(t))
+        if self.session_active and not self.session_paused:
             self.after(0, self.complete_session)
 
     def update_kite(self, time_str):
@@ -369,13 +336,59 @@ class KiteAppFrame(tk.Frame):
         self._record_session()
         self._show_completion()
 
-    def take_break(self):
+    def toggle_pause(self):
         if not self.session_active:
             return
-        self.session_active = False
-        self.kite_canvas.set_active(False)
-        self._record_session()
-        self._show_break_recommendation()
+        if self.session_paused:
+            # Resume
+            self.session_paused = False
+            self.pause_btn.config(text="⏸ Pause", bg=YELLOW)
+            self.status_label.config(text="Session resumed.")
+            self.kite_canvas.set_active(True)
+            # Restart timer thread
+            self.timer_thread = threading.Thread(target=self.run_timer, daemon=True)
+            self.timer_thread.start()
+        else:
+            # Pause → prompt mood
+            self.session_paused = True
+            self.kite_canvas.set_active(False)
+            self.pause_btn.config(text="▶ Resume", bg=GREEN)
+            self.status_label.config(text="Session paused. How are you feeling?")
+            self.ask_mood_on_pause()
+
+    def ask_mood_on_pause(self):
+        mood_win = tk.Toplevel(self)
+        mood_win.title("How are you feeling?")
+        mood_win.geometry("360x200")
+        mood_win.configure(bg=PANEL)
+        mood_win.transient(self)
+        mood_win.grab_set()
+
+        tk.Label(mood_win, text="Rate your current mood:\n1 = Exhausted/Stressed ←→ 10 = Energized/Happy",
+                 font=("Segoe UI", 11), fg=TEXT, bg=PANEL, justify="center").pack(pady=15)
+
+        mood_var = tk.IntVar(value=5)
+        mood_scale = tk.Scale(
+            mood_win, from_=1, to=10, orient="horizontal",
+            variable=mood_var, length=300,
+            bg=PANEL, fg=TEXT, highlightthickness=0,
+            troughcolor=BG, activebackground=ACCENT
+        )
+        mood_scale.pack(pady=10)
+
+        def submit_mood():
+            mood_score = mood_var.get()
+            self.log_data["moods"].append({
+                "time": datetime.now().isoformat(),
+                "mood_score": mood_score  # 1-10
+            })
+            self.save_log(self.log_data)
+            mood_win.destroy()
+
+        tk.Button(
+            mood_win, text="✅ Submit & Continue", command=submit_mood,
+            bg=GREEN, fg="#000", font=("Segoe UI", 10, "bold"), padx=15, pady=5
+        ).pack(pady=10)
 
     def _record_session(self):
         session_mins = (self.total_seconds - self.seconds_left) // 60
@@ -391,47 +404,17 @@ class KiteAppFrame(tk.Frame):
         session_count = len(self.log_data["sessions"])
         action = get_break_action(session_count, self.profile)
         self.status_label.config(text=f"✅ Session #{session_count} complete!\n\n{action}")
-        self.ask_mood()
-        self._reset_ui()
-
-    def _show_break_recommendation(self):
-        session_count = len(self.log_data["sessions"])
-        action = get_break_action(session_count, self.profile)
-        self.status_label.config(text=f"⏸ Break taken early.\n\nRecommended: {action}")
-        self.ask_mood()
         self._reset_ui()
 
     def _reset_ui(self):
         self.session_active = False
+        self.session_paused = False
         self.kite_canvas.set_active(False)
         self.start_btn.config(state="normal", bg=GREEN)
-        self.break_btn.config(state="disabled", bg="#555")
+        self.pause_btn.config(state="disabled", bg="#555", text="⏸ Pause")
         self.kite_canvas.time_text = ""
         self.kite_canvas.percent = 0
         self.kite_canvas.draw()
-
-    def ask_mood(self):
-        mood_win = tk.Toplevel(self)
-        mood_win.title("How do you feel?")
-        mood_win.geometry("320x240")
-        mood_win.configure(bg=PANEL)
-        mood_win.transient(self)
-        mood_win.grab_set()
-
-        tk.Label(mood_win, text="After your break, how do you feel?", font=("Segoe UI", 12),
-                 fg=TEXT, bg=PANEL).pack(pady=15)
-
-        for text, value in [("😊 Happy", "happy"), ("😔 Sad", "sad"), ("😴 Tired", "tired"), ("😠 Angry", "angry")]:
-            tk.Button(
-                mood_win, text=text, font=("Segoe UI", 11, "bold"),
-                command=lambda v=value, w=mood_win: self.save_mood(v, w),
-                bg=BG, fg=TEXT, relief="flat", padx=20, pady=6
-            ).pack(pady=4)
-
-    def save_mood(self, mood, win):
-        self.log_data["moods"].append({"time": datetime.now().isoformat(), "mood": mood})
-        self.save_log(self.log_data)
-        win.destroy()
 
     def load_all_logs(self, period="daily"):
         now = datetime.now()
@@ -496,15 +479,27 @@ class KiteAppFrame(tk.Frame):
             tk.Label(parent, text="No session data yet.", fg=MUTED, bg=PANEL, font=("Segoe UI", 14)).pack(expand=True)
             return
 
+        # Map mood_score (1-10) to graph Y (0-3)
+        def score_to_graph_level(score):
+            if score <= 2:
+                return 0  # angry
+            elif score <= 4:
+                return 1  # tired
+            elif score <= 7:
+                return 2  # neutral
+            else:
+                return 3  # happy
+
         session_data = []
         mood_index = 0
         moods_sorted = sorted(moods, key=lambda x: x["time"])
 
         for sess in sessions:
             sess_time = datetime.fromisoformat(sess["completed_at"])
-            mood_val = 2  # default neutral
+            mood_val = 5  # default mid
             while mood_index < len(moods_sorted) and datetime.fromisoformat(moods_sorted[mood_index]["time"]) <= sess_time:
-                mood_val = MOOD_SCORE.get(moods_sorted[mood_index]["mood"], 2)
+                raw_score = moods_sorted[mood_index].get("mood_score", 5)
+                mood_val = score_to_graph_level(raw_score)
                 mood_index += 1
             session_data.append((mood_val, sess["duration_min"]))
 
@@ -532,15 +527,15 @@ class KiteAppFrame(tk.Frame):
         if n == 0:
             return
 
-        mood_vals = [item[0] for item in session_data]
         time_vals = [item[1] for item in session_data]
         max_time = max(time_vals) if time_vals else 1
 
-        # Left Y-axis: Mood
-        for i in range(5):
-            y = top_pad + plot_h - (i / 4) * plot_h
+        # Left Y-axis: Mood levels
+        MOOD_LABELS_GRAPH = ["😠 Low", "😴 Tired", "😐 Okay", "😊 Great"]
+        for i in range(4):
+            y = top_pad + plot_h - (i / 3) * plot_h
             canvas.create_line(left_pad - 10, y, left_pad, y, fill=MUTED)
-            canvas.create_text(left_pad - 15, y, text=MOOD_LABELS[i], fill=TEXT, anchor="e", font=("Segoe UI", 9))
+            canvas.create_text(left_pad - 15, y, text=MOOD_LABELS_GRAPH[i], fill=TEXT, anchor="e", font=("Segoe UI", 9))
 
         # Right Y-axis: Time
         time_ticks = min(5, max(2, max_time // 5 + 1))
@@ -575,15 +570,17 @@ class KiteAppFrame(tk.Frame):
         mood_points = []
         time_points = []
 
+        MOOD_COLORS_GRAPH = {0: RED, 1: YELLOW, 2: MUTED, 3: GREEN}
+
         for i, (mood, dur) in enumerate(session_data):
             x = left_pad + (i / (n - 1 if n > 1 else 1)) * plot_w
-            y_mood = top_pad + plot_h - (mood / 4) * plot_h
+            y_mood = top_pad + plot_h - (mood / 3) * plot_h
             y_time = top_pad + plot_h - (dur / max_time) * plot_h
 
             mood_points.extend([x, y_mood])
             time_points.extend([x, y_time])
 
-            color = MOOD_COLORS[mood]
+            color = MOOD_COLORS_GRAPH[mood]
             canvas.create_oval(x-5, y_mood-5, x+5, y_mood+5, fill=color, outline="")
 
             tri_size = 6
@@ -631,20 +628,28 @@ class KiteAppFrame(tk.Frame):
             return
 
         total_min = sum(s["duration_min"] for s in self.log_data["sessions"])
-        mood_counts = {}
+        mood_counts = {"1-2": 0, "3-4": 0, "5-7": 0, "8-10": 0}
         for m in self.log_data["moods"]:
-            mood_counts[m["mood"]] = mood_counts.get(m["mood"], 0) + 1
+            score = m.get("mood_score", 5)
+            if score <= 2:
+                mood_counts["1-2"] += 1
+            elif score <= 4:
+                mood_counts["3-4"] += 1
+            elif score <= 7:
+                mood_counts["5-7"] += 1
+            else:
+                mood_counts["8-10"] += 1
 
         report = f"""🪁 Kite Daily Report — {datetime.now().strftime('%Y-%m-%d')}
 {"="*50}
 ⏱️  Total Focused Time: {total_min} minutes
 🎯 Sessions: {len(self.log_data['sessions'])}
 
-😌 Mood Summary:"""
-        for mood in ["happy", "tired", "sad", "angry"]:
-            if mood in mood_counts:
-                emoji = {"happy": "😊", "tired": "😴", "sad": "😔", "angry": "😠"}[mood]
-                report += f"\n   {emoji} {mood.capitalize()}: {mood_counts[mood]}"
+😌 Mood Summary (1-10 scale):"""
+        report += f"\n   😠 Low (1-2): {mood_counts['1-2']}"
+        report += f"\n   😴 Tired (3-4): {mood_counts['3-4']}"
+        report += f"\n   😐 Okay (5-7): {mood_counts['5-7']}"
+        report += f"\n   😊 Great (8-10): {mood_counts['8-10']}"
 
         water = water_goal(self.profile["weight_lbs"])
         report += f"\n\n💡 Wellness:\n   • Water Goal: {water}L\n   • Profile: {self.profile['gender']}, {self.profile['age']}y"
@@ -655,6 +660,7 @@ class KiteAppFrame(tk.Frame):
 
     def cleanup(self):
         self.session_active = False
+        self.session_paused = False
         self.kite_canvas.set_active(False)
         if HAS_PSUTIL:
             try:
@@ -705,11 +711,12 @@ class KiteApplication:
         self.current_frame.pack(fill="both", expand=True)
 
     def on_closing(self):
-        if hasattr(self.current_frame, 'session_active') and self.current_frame.session_active:
-            messagebox.showwarning("Focus Active", "Please complete or break your session before closing.")
+        frame = self.current_frame
+        if hasattr(frame, 'session_active') and frame.session_active and not frame.session_paused:
+            messagebox.showwarning("Focus Active", "Please pause or complete your session before closing.")
         else:
-            if hasattr(self.current_frame, 'cleanup'):
-                self.current_frame.cleanup()
+            if hasattr(frame, 'cleanup'):
+                frame.cleanup()
             self.root.destroy()
 
 # ==============================
